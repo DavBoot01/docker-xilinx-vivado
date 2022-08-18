@@ -1,0 +1,14 @@
+#!/bin/bash
+
+XILINX_HOME_FOLDERS=/opt/dockers/xilinx_home_folders/
+WORKDIR=/home/davide/vivado
+HOSTNAME=davboot01
+
+docker run --rm -it -h ${HOSTNAME} --privileged --env DISPLAY=${DISPLAY} \
+-v /tmp/.X11-unix:/tmp/.X11-unix \
+-v ${HOME}/.Xauthority:/home/vivado/.Xauthority:rw \
+-v ${XILINX_HOME_FOLDERS}/Xilinx:/home/vivado/.Xilinx:rw \
+-v ${WORKDIR}:/home/vivado/workdir:rw \
+-v /dev:/dev -v /sys:/sys \
+davboot01/xilinx_vivado:2020.1 --cmd=vivado
+

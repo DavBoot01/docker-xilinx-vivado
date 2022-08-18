@@ -1,0 +1,19 @@
+version: "3"
+services:
+  ubuntu_vivado:
+    image: "davboot01/xilinx_vivado:2020.1"
+    privileged: true
+    network_mode: "host"
+    tty: true
+    volumes:
+      - /sys:/sys
+      - /dev:/dev
+      - ${HOME}/.Xauthority:/home/vivado/.Xauthority:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix    
+      - /opt/dockers/xilinx_home_folders/Xilinx:/home/vivado/.Xilinx:rw 
+      - /home/davide/vivado:/home/vivado/workdir:rw
+    working_dir: /home/vivado/workdir
+    environment:
+      - DISPLAY=${DISPLAY}
+    command: --cmd=vivado
+      

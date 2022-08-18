@@ -1,0 +1,88 @@
+
+#Target: Xilinx Vivado @ version 2020.1
+
+# Use Ubuntu 18.04 LTS as the basis for the Docker image.
+FROM ubuntu:18.04
+
+
+# Install essential host package need to install and use petalinux
+RUN dpkg --add-architecture i386 && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y -q \ 
+	tofrodos iproute2 gawk xvfb gcc-4.8 git make net-tools libncurses5-dev tftpd \
+	tftp-hpa zlib1g-dev:i386 libssl-dev flex bison libselinux1 gnupg wget diffstat chrpath \
+	socat xterm autoconf libtool tar unzip texinfo zlib1g-dev gcc-multilib build-essential \
+	libsdl1.2-dev libglib2.0-dev screen expect locales cpio sudo software-properties-common \
+	pax gzip vim libgtk2.0-0 u-boot-tools build-essential libssl-dev libffi-dev python3 python3-dev \
+	python3-git python3-pexpect python3-pip python3-jinja2 pylint3 libegl1-mesa iputils-ping debianutils \
+	xz-utils debianutils rsync \
+	&& apt-get autoremove --purge && apt-get autoclean \
+	&& rm -rf /var/lib/apt/lists/*
+
+
+
+# Set the locale to en_US.UTF-8, because the Yocto build fails without any locale set.
+RUN locale-gen en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV DISPLAY :0
+# Replace dash with bash
+# By default, Ubuntu uses dash as an alias for sh. Dash does not support the source command
+# needed for setting up the build environment in CMD. Use bash as an alias for sh.
+RUN rm /bin/sh && ln -s bash /bin/sh
+
+
+# Remove need of insert password for all user
+RUN echo "%sudo ALL=(ALL:ALL) ALL" >> /etc/sudoers
+RUN echo "%sudo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /opt
+
+# Make a Vivado user, intent to install Xilinx's tools (these do not allow installation as root user)
+RUN adduser --disabled-password --gecos '' vivado && \
+  usermod -aG sudo vivado && \
+  echo "vivado ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+
+ARG XILINX_VERSION=2020.1
+ARG XILINX_RUN_FILE=Xilinx_Unified_2020.1_0602_1208
+ARG XILINX_INSTALL_FILE=install_config_vitis.txt
+
+ADD resources/${XILINX_RUN_FILE}.tar.gz /
+# run the install
+RUN chmod a+rxw /${XILINX_RUN_FILE} && \
+    mkdir -p /opt/Xilinx/ && \
+    chmod a+rwx /tmp /opt/Xilinx/ && \
+    cd /tmp
+
+# install Vitis
+ADD  resources/install/${XILINX_INSTALL_FILE} /
+RUN  sudo -u vivado -i /${XILINX_RUN_FILE}/xsetup ./xsetup \
+   -a XilinxEULA,3rdPartyEULA,WebTalkTerms \
+   -b Install \
+   -c /install_config_vitis.txt \
+   --location /opt/Xilinx/Vitis
+
+## install Documentation Navigator
+#ADD install_config_documentation_navigator.txt /
+#RUN  sudo -u vivado -i /${XILINX_RUN_FILE}/xsetup ./xsetup \
+#    -a XilinxEULA,3rdPartyEULA,WebTalkTerms \
+#    -b Install \
+#    -c /install_config_documentation_navigator.txt \
+#    --location /opt/Xilinx/
+#
+RUN rm -rf /${XILINX_RUN_FILE} /install_config_*
+
+
+# Clean up APT when done.
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ADD image_addon/bashrc_add.txt /
+RUN cat bashrc_add.txt >> /home/xilinx/.bashrc && \
+  rm bashrc_add.txt
+
+RUN echo "root:root" | chpasswd
+
+ADD entrypoint.sh /bin
+
+#USER vivado
+WORKDIR /home/vivado/
+ENTRYPOINT ["bash", "/bin/entrypoint.sh"]

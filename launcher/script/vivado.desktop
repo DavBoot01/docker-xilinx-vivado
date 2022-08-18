@@ -1,0 +1,8 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Terminal=false
+Name=Vivado IDE
+GenericName=Xilinx Vivado 2020.1 Docker Container
+Icon=/opt/docker_launcher/host/vivado.jpeg
+Exec=xterm -e "docker-compose -f /opt/docker_launcher/compose/docker-compose_vivado_2020.1.yml up"
