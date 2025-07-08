@@ -2,7 +2,7 @@ Xilinx-Vivado/Vitis
 ===============================================================================
 
 Xilinx Vivado and Vitis Docker 
-Current version: Xilinx Vivado 2022.1
+Current version: Xilinx Vivado 2020.1
 
 Description
 -------------------------------------------------------------------------------
